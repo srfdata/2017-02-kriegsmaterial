@@ -14,7 +14,7 @@ options("getSymbols.warning4.0"=FALSE)
 
 ### Vorbemerkungen
 
-Dieses Dokument beschreibt die Vorprozessierung und explorative Analyse des Datensatzes, der Grundlage der beiden auf srf.ch veröffentlichten Artikel [Schweizer Rüstungsexporte: Sind die fetten Jahre vorbei?](http://www.srf.ch/news/schweiz/schweizer-ruestungsexporte-sind-die-fetten-jahre-vorbei) und [ Schweizer Waffen-Exporte stagnieren](http://www.srf.ch/news/schweiz/schweizer-waffen-exporte-stagnieren) ist.
+Dieses Dokument beschreibt die Vorprozessierung und explorative Analyse des Datensatzes, der Grundlage der beiden auf srf.ch veröffentlichten Artikel [Schweizer Rüstungsexporte: Sind die fetten Jahre vorbei?](http://www.srf.ch/news/schweiz/schweizer-ruestungsexporte-sind-die-fetten-jahre-vorbei) und [Sieben Infografiken zu Waffen-Exporten aus der Schweiz](http://www.srf.ch/news/schweiz/sieben-infografiken-zu-waffen-exporten-aus-der-schweiz) ist.
 
 SRF Data legt Wert darauf, dass die Datenvorprozessierung und -Analyse nachvollzogen und überprüft werden kann. SRF Data glaubt an das Prinzip offener Daten, aber auch offener und nachvollziehbarer Methoden. Zum anderen soll es Dritten ermöglicht werden, auf dieser Vorarbeit aufzubauen und damit weitere Auswertungen oder Applikationen zu generieren.  
 

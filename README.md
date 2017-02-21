@@ -2,7 +2,7 @@
 
 ## Artikel
 
-Die Daten und Methoden in diesem Repository beziehen sich auf den Artikel [Schweizer Rüstungsexporte: Sind die fetten Jahre vorbei?](http://www.srf.ch/news/schweiz/schweizer-ruestungsexporte-sind-die-fetten-jahre-vorbei), publiziert am 23. Februar 2016, und [ Schweizer Waffen-Exporte stagnieren](http://www.srf.ch/news/schweiz/schweizer-waffen-exporte-stagnieren), publiziert am 21. Februar 2017. 
+Die Daten und Methoden in diesem Repository beziehen sich auf den Artikel [Schweizer Rüstungsexporte: Sind die fetten Jahre vorbei?](http://www.srf.ch/news/schweiz/schweizer-ruestungsexporte-sind-die-fetten-jahre-vorbei), publiziert am 23. Februar 2016, und [Sieben Infografiken zu Waffen-Exporten aus der Schweiz](http://www.srf.ch/news/schweiz/sieben-infografiken-zu-waffen-exporten-aus-der-schweiz), publiziert am 21. Februar 2017. 
 
 ## Beschreibung
 
