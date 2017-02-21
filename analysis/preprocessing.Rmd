@@ -1,0 +1,1019 @@
+---
+subtitle: "Vorprozessierung und Analyse"
+title: "Export von Kriegsmaterial aus der Schweiz"
+author: "SRF Data, Timo Grossenbacher (timo.grossenbacher@srf.ch), Marie-Louise Timcke (marie.timcke@journocode.com)"
+date: "02/21/2016"
+output: html_document
+---
+
+```{r,  echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(comment = NA, message = F, warning = F, fig.width = 10)
+options("getSymbols.warning4.0"=FALSE)
+```
+
+
+### Vorbemerkungen
+
+Dieses Dokument beschreibt die Vorprozessierung und explorative Analyse des Datensatzes, der Grundlage der beiden auf srf.ch veröffentlichten Artikel [Schweizer Rüstungsexporte: Sind die fetten Jahre vorbei?](http://www.srf.ch/news/schweiz/schweizer-ruestungsexporte-sind-die-fetten-jahre-vorbei) und [ Schweizer Waffen-Exporte stagnieren](http://www.srf.ch/news/schweiz/schweizer-waffen-exporte-stagnieren) ist.
+
+SRF Data legt Wert darauf, dass die Datenvorprozessierung und -Analyse nachvollzogen und überprüft werden kann. SRF Data glaubt an das Prinzip offener Daten, aber auch offener und nachvollziehbarer Methoden. Zum anderen soll es Dritten ermöglicht werden, auf dieser Vorarbeit aufzubauen und damit weitere Auswertungen oder Applikationen zu generieren.  
+
+Die Vorprozessierung und Analyse wurde im Statistikprogramm R vorgenommen. Die Endprodukte des verwendeten Scripts sind:
+
+* `output/export.csv`: Vollständiger, aggregierter Datensatz, der aus den einzelnen Jahresstatistiken des SECO geschaffen wird. Dieser Datensatz wird im folgenden Kapitel beschrieben. 
+
+#### R-Script & Daten
+
+Das zugrunde liegende Script sowie die prozessierten Daten können unter [diesem Link](http://srfdata.github.io/2017-02-kriegsmaterial/rscript.zip) heruntergeladen werden. Durch Ausführen von `preprocessing.Rmd` kann der hier beschriebene Prozess nachvollzogen und dieses Dokument generiert werden. Dabei werden Daten aus dem Ordner `input` eingelesen und Ergebnisse in den Ordner `output` geschrieben. 
+
+#### GitHub
+
+Der Code für die vorliegende Datenprozessierung ist auf  [http://github.com/srfdata/2017-02-kriegsmaterial](http://github.com/srfdata/2017-02-kriegsmaterial) zur freien Verwendung verfügbar. 
+
+#### Lizenz
+
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons Lizenzvertrag" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">2017-02-kriegsmaterial</span> von <a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/srfdata/2017-02-kriegsmaterial" property="cc:attributionName" rel="cc:attributionURL">SRF Data</a> ist lizenziert unter einer <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Namensnennung - Weitergabe unter gleichen Bedingungen 4.0 International Lizenz</a>.
+
+#### Weitere Projekte
+
+Code & Daten von [SRF Data](http://srf.ch/data) sind unter [http://srfdata.github.io](http://srfdata.github.io) verfügbar.
+
+#### Haftungsausschluss
+
+Die veröffentlichten Informationen sind sorgfältig zusammengestellt, erheben aber keinen Anspruch auf Aktualität, Vollständigkeit oder Richtigkeit. Es wird keine Haftung übernommen für Schäden, die  durch die Verwendung dieses Scripts oder der daraus gezogenen Informationen entstehen. Dies gilt ebenfalls für Inhalte Dritter, die über dieses Angebot zugänglich sind. 
+
+### Datenbeschreibung `export.csv`
+
+| Attribut | Typ | Beschreibung |
+|-------|------|---------|
+| Land | String | Land, in das die Güter exportiert werden. |
+| Jahr | Integer  | Jahr, in dem die Güter exportiert wurden. |
+| Kategorie | String |  Kategorie der ausgeführten Güter, siehe unten. |
+| Wert  |  Integer | Wert der Güter in Schweizer Franken. |
+
+#### Originalquelle 
+
+Alle Originalstatistiken seit 2000 sind auf [der Website des SECO](https://www.seco.admin.ch/seco/de/home/Aussenwirtschaftspolitik_Wirtschaftliche_Zusammenarbeit/Wirtschaftsbeziehungen/exportkontrollen-und-sanktionen/ruestungskontrolle-und-ruestungskontrollpolitik--bwrp-/zahlen-und-statistiken0.html) abrufbar.
+
+Es wurde jeweils die Datei "Ausfuhren nach Kategorie pro Endempfängerstaat" verwendet. 
+
+Vom SECO wurden SRF Data, wo vorhanden, Excel-Dateien zur Verfügung gestellt. Wo nicht, wurden die vorhandenen PDF-Dateien in einem mehrstufigen Prozess maschinenlesbar gemacht und darauf in die Ursprungsdatei `input/2000-2016.xlsx` überführt. 
+
+####  Was steht hinter den Kategoriekürzeln? 
+
+Kürzel |  Beschreibung
+-------|------------------------------------------------------------------------------------------------
+  KM1  |  Hand- und Faustfeuerwaffen jeglichen Kalibers
+  KM2  |  Waffen jeglichen Kalibers (jedoch ohne Hand- und Faustfeuerwaffen soweit hievor in KM 1 erfasst)
+  KM3  |  Munition für die in KM 1, 2 oder 12 erfassten Waffen
+  KM4  |  Bomben, Torpedos, Raketen, Flugkörper
+  KM5  |  Feuerleiteinrichtungen
+  KM6  |  Panzer- und andere Landfahrzeuge
+  KM7  |  Tränengase u.a. Reizstoffe
+  KM8  |  Militärische Explosiv-, Brenn- und Treibstoffe
+  KM10 |  Bemannte und unbemannte Luftfahrzeuge inkl. entsprechende Triebwerke
+  KM16 |  Schmiedestücke, Gussstücke und andere unfertige Erzeugnisse
+Andere |  KM9, KM11-KM15, KM17-KM22, Kryogenische (Tieftemperatur-) und supraleitende Ausrüstung (KM20), ansonsten Software, Strahlenwaffen, Kriegsschiffe...
+
+### Vorbereitungen
+
+#### Packages installieren
+
+```{r}
+if(!require(dplyr)) {
+  install.packages("dplyr", repos="http://cran.us.r-project.org")
+  require(dplyr)
+}
+if(!require(tidyr)) {
+  install.packages("tidyr", repos="http://cran.us.r-project.org")
+  require(tidyr)
+}
+if(!require(ggplot2)) {
+  install.packages("ggplot2", repos="http://cran.us.r-project.org")
+  require(ggplot2)
+}
+if(!require(readxl)) {
+  devtools::install_github("hadley/readxl")
+  require(readxl)
+}
+if(!require(stringr)) {
+  install.packages("stringr", repos="http://cran.us.r-project.org")
+  require(stringr)
+}
+if(!require(scales)) {
+  install.packages("scales", repos="http://cran.us.r-project.org")
+  require(scales)
+}
+if(!require(grid)) {
+  install.packages("grid", repos="http://cran.us.r-project.org")
+  require(grid)
+}
+if(!require(reshape)) {
+  install.packages("reshape", repos="http://cran.us.r-project.org")
+  require(reshape)
+}
+```
+
+
+### Vorprozessierung
+
+#### Daten reinladen und typisieren
+
+```{r}
+# 2000 - 2016
+
+#setwd("/Users/MarieLou/SRF/1601-arms-exports/preprocessing")
+
+# Alle Exceltabellen liegen aufsteigend in einer Arbeitsmappe, so dass sheet1 = 2000, sheet2 = 2001 usw
+# lade alle sheets der Arbeitsmappe als data frames in eine Liste sheets
+sheets <- list()
+for(i in 1:17){
+ sheets[[i]] <- read_excel("input/2000-2016.xlsx", sheet = i)
+ k <- c(2000:2016)
+ sheets[[i]]$Jahr <- k[i]
+}
+# Liste "sheets" enthält nun einzelne data frames, wobei sheets[[1]]= 2000, sheets[[2]]= 2001 usw. 
+
+# einzelne dataframes zu einem einzigen frame mergen und durch leere Spalten in den Ausgangsdaten erzeugte NA's durch Nullen ersetzen
+export <- do.call(rbind.data.frame, sheets)
+export[is.na(export)] <- 0
+rm(sheets, i ,k)
+```
+
+
+#### Restrukturieren
+
+```{r}
+# # Daten kondensieren (breit nach lang)
+export_restructured <- export %>% 
+  as.data.frame() %>% 
+  tidyr::gather(key = "variable", value = "value", 2:12)
+rm(export)
+```
+
+
+#### Länder-Duplikate entfernen
+Wie viele Länder gibt es? 
+
+```{r}
+laender <- arrange(export_restructured, Land) # nach Ländernamen sortieren
+unique(laender$Land) # vorkommende Ländernamen anzeigen: gibt es Duplikate
+length(unique(laender$Land)) # wie viele Länder gibt es insgesamt (mit Duplikaten)?
+```
+
+Manuell umschreiben
+
+```{r}
+export_restructured$Land[export_restructured$Land == "Aegypten / Egypte"|export_restructured$Land == "Aegypten"] <- "Ägypten"
+export_restructured$Land[export_restructured$Land == "Andorra "] <- "Andorra"
+export_restructured$Land[export_restructured$Land == "Arab. Emirate / Emirats Arabes"|export_restructured$Land == "Arabische Emirate"] <- "Vereinigte Arabische Emirate"
+export_restructured$Land[export_restructured$Land == "Argentinien / Argentine"] <- "Argentinien"
+export_restructured$Land[export_restructured$Land == "Australien / Australie"] <- "Australien"
+export_restructured$Land[export_restructured$Land == "Bahrein"|export_restructured$Land =="Bahrein / Bahrein"] <- "Bahrain"
+export_restructured$Land[export_restructured$Land == "Belgien "|export_restructured$Land =="Belgien / Belgique"] <- "Belgien"
+export_restructured$Land[export_restructured$Land == "Benin "|export_restructured$Land == "Benin /Benin"|export_restructured$Land == "Benin / Bénin"] <- "Benin"
+export_restructured$Land[export_restructured$Land == "Bosnien / Bosnie"|export_restructured$Land == "Bosnien"|export_restructured$Land == "Bosnien und Herzeg."] <- "Bosnien-Herzegowina"
+export_restructured$Land[export_restructured$Land == "Botswana / Botswana"|export_restructured$Land == "Botwana"] <- "Botswana"
+export_restructured$Land[export_restructured$Land == "Brasilien / Brésil"] <- "Brasilien"
+export_restructured$Land[export_restructured$Land == "Bangladesh"] <- "Bangladesch"
+export_restructured$Land[export_restructured$Land == "Brunei /Brunei"|export_restructured$Land == "Brunel"] <- "Brunei"
+export_restructured$Land[export_restructured$Land == "Bulgarien / Bulgaarie"|export_restructured$Land == "Bulgarien / Bulgarie"] <- "Bulgarien"
+export_restructured$Land[export_restructured$Land == "Burkina Fasso / Burkina Faso"|export_restructured$Land == "Burkin Fasso"|export_restructured$Land == "Burkina Fasso"] <- "Burkina Faso"
+export_restructured$Land[export_restructured$Land == "Buthan / Bouthan"|export_restructured$Land =="Buthan"] <- "Bhutan"
+export_restructured$Land[export_restructured$Land == "Chile / Chili"] <- "Chile"
+export_restructured$Land[export_restructured$Land == "Costa Rica / Costa Rica"] <- "Costa Rica"
+export_restructured$Land[export_restructured$Land == "Dänemark / Danemark"] <- "Dänemark"
+export_restructured$Land[export_restructured$Land == "Deutschland / Allemagne"] <- "Deutschland"
+export_restructured$Land[export_restructured$Land == "Dom. Rep. / Rep Dom."|export_restructured$Land == "Dom Rep"|export_restructured$Land == "Dominika Rep."] <- "Dominikanische Republik"
+export_restructured$Land[export_restructured$Land == "Elfenbeinküste\r\n"] <- "Elfenbeinküste"
+export_restructured$Land[export_restructured$Land == "Estland / Estonie"] <- "Estland"
+export_restructured$Land[export_restructured$Land == "Finnland / Finlande"|export_restructured$Land == "Finnnland "|export_restructured$Land == "Finnnland / Finiande"] <- "Finnland"
+export_restructured$Land[export_restructured$Land == "Frankreich "|export_restructured$Land == "Frankreich / France"] <- "Frankreich"
+export_restructured$Land[export_restructured$Land == "Franz Polynesien"] <- "Französisch-Polynesien"
+export_restructured$Land[export_restructured$Land == "Großbritannien"|export_restructured$Land == "Gossbritannien"|export_restructured$Land == "Gr. Britannien / Royaume Uni"] <- "Grossbritannien"
+export_restructured$Land[export_restructured$Land == "Griechenland / Grece"|export_restructured$Land == "Griechenland / Grèce"] <- "Griechenland"
+export_restructured$Land[export_restructured$Land == "Hongkong"|export_restructured$Land == "Hongkong / Hong Kong"] <- "Hong-Kong"
+export_restructured$Land[export_restructured$Land == "Indien / Inde"] <- "Indien"
+export_restructured$Land[export_restructured$Land == "Indonesien / Indonésie"|export_restructured$Land == "Indonesien / Indonesie"] <- "Indonesien"
+export_restructured$Land[export_restructured$Land == "Irland / Irlande"] <- "Irland"
+export_restructured$Land[export_restructured$Land == "Island "|export_restructured$Land == "Island / Islande"] <- "Island"
+export_restructured$Land[export_restructured$Land == "Italien / Italie"] <- "Italien"
+export_restructured$Land[export_restructured$Land == "Japan /Japon"] <- "Japan"
+export_restructured$Land[export_restructured$Land == "Jordanien / Jordanie"] <- "Jordanien"
+export_restructured$Land[export_restructured$Land == "Kamerun "|export_restructured$Land == "Kamerun / Cameroune"] <- "Kamerun"
+export_restructured$Land[export_restructured$Land == "Kanada / Canada"|export_restructured$Land == "Kanada "] <- "Kanada"
+export_restructured$Land[export_restructured$Land == "Kasachstan / Kzakhstan"] <- "Kasachstan"
+export_restructured$Land[export_restructured$Land == "Kenia / Kenya"] <- "Kenia"
+export_restructured$Land[export_restructured$Land == "Korea (Süd) "|export_restructured$Land == "Korea (Süd) / Corée du Sud"|export_restructured$Land == "Korea (Süd) / Corte du Sud"|export_restructured$Land == "Korea (Süd)"|export_restructured$Land == "Süd Korea"] <- "Südkorea"
+export_restructured$Land[export_restructured$Land == "Kroatien / Croatie"] <- "Kroatien"
+export_restructured$Land[export_restructured$Land == "Kuwait / Kowe'it"|export_restructured$Land == "Kuwait / Koweït"|export_restructured$Land == "Kuwait "] <- "Kuwait"
+export_restructured$Land[export_restructured$Land == "Lettland / Letonie"|export_restructured$Land == "Lettland "] <- "Lettland"
+export_restructured$Land[export_restructured$Land == "Libanon / Liban"|export_restructured$Land == "Lebanon"] <- "Libanon"
+export_restructured$Land[export_restructured$Land == "Libyen / Libye"] <- "Libyen"
+export_restructured$Land[export_restructured$Land == "Litauen / Lituanie"] <- "Litauen"
+export_restructured$Land[export_restructured$Land == "Luxemburg / Luxembourg"] <- "Luxemburg"
+export_restructured$Land[export_restructured$Land == "Macau / Macau"|export_restructured$Land == "Macao"] <- "Macau"
+export_restructured$Land[export_restructured$Land == "Malaysia / Malaisie"] <- "Malaysia"
+export_restructured$Land[export_restructured$Land == "Malta / Malte"] <- "Malta"
+export_restructured$Land[export_restructured$Land == "Namibia / Namibie"] <- "Namibia"
+export_restructured$Land[export_restructured$Land == "Neuseeland / Nvl. Zelande"|export_restructured$Land == "Neuseeland / Nouvelle Zélande"] <- "Neuseeland"
+export_restructured$Land[export_restructured$Land == "Niederlände"|export_restructured$Land == "Niederlande / Pays-Bas"|export_restructured$Land == "Niederlände / Pays-Bas"] <- "Niederlande"
+export_restructured$Land[export_restructured$Land == "Niger / Niger"] <- "Niger"
+export_restructured$Land[export_restructured$Land == "Norwegen / Norvege"|export_restructured$Land == "Norwegen / Norvège"] <- "Norwegen"
+export_restructured$Land[export_restructured$Land == "Oman / Oman"] <- "Oman"
+export_restructured$Land[export_restructured$Land == "Österreich / Autriche"] <- "Österreich"
+export_restructured$Land[export_restructured$Land == "Pakistan / Pakistan"] <- "Pakistan"
+export_restructured$Land[export_restructured$Land == "Peru / Pérou"] <- "Peru"
+export_restructured$Land[export_restructured$Land == "Philippinen / Philipinnes"] <- "Philippinen"
+export_restructured$Land[export_restructured$Land == "Polen / Pologne"] <- "Polen"
+export_restructured$Land[export_restructured$Land == "Portugal / Portugal"] <- "Portugal"
+export_restructured$Land[export_restructured$Land == "Rumänien / Roumanie"] <- "Rumänien"
+export_restructured$Land[export_restructured$Land == "Russland / Russie"] <- "Russland"
+export_restructured$Land[export_restructured$Land == "San Marino / St Marin"] <- "San Marino"
+export_restructured$Land[export_restructured$Land == "Saudi Arabien"|export_restructured$Land == "Saudi Arabien / Arab. Saoudite"|export_restructured$Land == "Saudi Arabien /Arab. Saoudite"|export_restructured$Land == "Saudi Arabien "] <- "Saudi-Arabien"
+export_restructured$Land[export_restructured$Land == "Schweden / Suade"|export_restructured$Land == "Schweden / Suède" ] <- "Schweden"
+export_restructured$Land[export_restructured$Land == "Singapur / Singapour"] <- "Singapur"
+export_restructured$Land[export_restructured$Land == "Slowakai / Slovaquie"|export_restructured$Land == "Slowakai"] <- "Slowakei"
+export_restructured$Land[export_restructured$Land == "Slowenien / Slovenie"] <- "Slowenien"
+export_restructured$Land[export_restructured$Land == "Spanien / Espagne"] <- "Spanien"
+export_restructured$Land[export_restructured$Land == "Südafrika / Afrique du Sud"] <- "Südafrika"
+export_restructured$Land[export_restructured$Land == "Thailand / Thailande"] <- "Thailand"
+export_restructured$Land[export_restructured$Land == "Tschechien / Rep. Tcheque"|export_restructured$Land == "Tschechien / Rép. Tchèque"] <- "Tschechien"
+export_restructured$Land[export_restructured$Land == "Tunesien / Tunisie"] <- "Tunesien"
+export_restructured$Land[export_restructured$Land == "Türkei / Turquie"|export_restructured$Land == "Türkei "] <- "Türkei"
+export_restructured$Land[export_restructured$Land == "Ungarn / Hongrie"] <- "Ungarn"
+export_restructured$Land[export_restructured$Land == "Uruguay / Uruguay"] <- "Uruguay"
+export_restructured$Land[export_restructured$Land == "USA "|export_restructured$Land == "USA / Etats-Unis" | export_restructured$Land == "U.S.A"] <- "USA"
+export_restructured$Land[export_restructured$Land == "Zypern / Chypre"] <- "Zypern"
+export_restructured$Land[export_restructured$Land == "Antillen, Niederl."] <- "Niederländische Antillen"
+export_restructured$Land[export_restructured$Land == "Kirgistan / Kirghistan"|export_restructured$Land == "Kirgistan"] <- "Kirgisistan"
+export_restructured$Land[export_restructured$Land == "Ecuador "] <- "Ecuador"
+export_restructured$Land[export_restructured$Land == "Madagascar"] <- "Madagaskar"
+export_restructured$Land[export_restructured$Land == "Salvador"] <- "El Salvador"
+export_restructured$Land[export_restructured$Land == "Surinam"] <- "Suriname"
+```
+
+Wie viele Länder gibt es jetzt noch? 
+
+```{r}
+length(unique(export_restructured$Land)) # Anzahl Länder
+sort(unique(export_restructured$Land)) # Überblick über die Ländernamen, um eventuell übersehene Duplikate aufzuspüren
+```
+
+127 verschiedene Länder wurden im Zeitraum 2000 bis 2016 beliefert
+
+#### Output als CSV
+
+```{r}
+export_csv <- export_restructured %>% dplyr::rename(Kategorie = variable, Wert = value)
+write.csv(export_csv, file = "output/export.csv", fileEncoding = "utf-8", row.names = F)
+rm(export_csv)
+```
+
+#### SRF Theme für die Grafiken vorbereiten
+
+```{r}
+theme_srf <- function(base_size = 10, base_family = "Arial", ...) {
+  theme_bw() +
+    theme(
+      title = element_text(size = 16, family = base_family, face = "bold"), 
+      text = element_text(color = "#555555", family = base_family),
+      legend.text = element_text(size = 12), 
+      legend.title = element_text(size = 14),
+      legend.margin = unit(0, "cm"),
+      axis.line = element_blank(),
+      legend.box = "vertical", 
+      panel.border = element_blank(),
+      plot.background = element_rect(fill = "#f5f5f2"), 
+      panel.background = element_rect(fill = "#f5f5f2"), 
+      legend.background = element_rect(fill = "#f5f5f2"),  
+      legend.key = element_blank(),
+      legend.key.width = unit(c(0.7), units = "cm"),
+      legend.key.height = unit(c(0.5), units = "cm"),
+      axis.line = element_blank(),
+      panel.grid.minor = element_blank(), 
+      panel.margin = unit(c(0.4,0.4,0.4,0.4), units = "mm"),
+      plot.margin = unit(c(0.9,0.9,0.9,0.9), "cm"),
+      axis.title.y = element_text(size = 14, vjust = 2),
+      axis.title.x = element_text(size = 14, vjust = -1),
+      axis.text = element_text(size = 12),
+      complete = TRUE,
+      ...
+    )
+}
+
+# kleineres srf theme
+theme_srf_small <- function(base_size = 8, base_family = "Arial", ...) {
+  theme_srf() +
+    theme(
+      title = element_text(size = 14, family = base_family, face = "bold"), 
+      text = element_text(color = "#555555", family = base_family),
+      legend.text = element_text(size = 9), 
+      legend.title = element_text(size = 11),
+      legend.key.width = unit(c(0.7), units = "cm"),
+      legend.key.height = unit(c(0.5), units = "cm"),
+      panel.margin = unit(c(0.4,0.4,0.4,0.4), units = "mm"),
+      plot.margin = unit(c(0.9,0.9,0.9,0.9), "cm"),
+      axis.title.y = element_text(size = 12, vjust = 2),
+      axis.title.x = element_text(size = 12, vjust = -1),
+      axis.text = element_text(size = 11),
+      ...
+    )
+}
+
+sources <- function(text = "SECO", vpos = "top"){
+  g = grobTree(textGrob(paste("Quelle:", text), x = ifelse(vpos == "top", 0.5, 0.955), y = ifelse(vpos == "top", 0.98, 0.08), just = ifelse(vpos == "top", "center", "right"), vjust = ifelse(vpos == "top", "top", "bottom"), gp = gpar(fontfamily = "SRG SSR Type", col = "#555555", fontsize = 14)))
+  annotation_custom(g)
+}
+
+sources_small <- function(text = "SECO", vpos = "top"){
+  g = grobTree(textGrob(paste("Quelle:", text), x = ifelse(vpos == "top", 0.5, 0.955), y = ifelse(vpos == "top", 0.98, 0.08), just = ifelse(vpos == "top", "center", "right"), vjust = ifelse(vpos == "top", "top", "bottom"), gp = gpar(fontfamily = "Arial", col = "#555555", fontsize = 10)))
+  annotation_custom(g)
+}
+```
+
+### Analyse
+
+#### Exportvolumen nach Zeit 
+
+Wie hat sich das Exportvolumen über die Jahre verändert?
+
+```{r, fig.height = 8}
+Export <- export_restructured %>% 
+   group_by(Jahr) %>% # ordnet die Daten nach Jahren an
+   dplyr::summarise(value = sum(value)) # fasst Exportvolumen nach Jahren zusammen
+
+Export # Zeigt Exportvolumen gesamt pro Jahr
+sum(Export$value) # Summe aller Exporte der letzten 15 Jahre
+sum(Export$value[Export$Jahr >= 2010]) # Summe aller Exporter der letzten 5 Jahre
+sum(Export$value[Export$Jahr >= 2010])/sum(Export$value)*100 # Anteil der Exporte der letzten 5 Jahre am Gesamtexportvolumen
+
+# Barplot des Gesamtvolumens nach Jahr
+volmio_1 <- Export$value/1000000 # Exportvolumen in Millionen
+ExportBar <- ggplot(data = Export, aes(x = Jahr, y = volmio_1)) + 
+   geom_bar(stat = "identity", fill = "#94928d") + 
+   xlab("Jahr") +
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle(paste("Exportvolumen")) +
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme(axis.text.x = element_text(angle=0, vjust=0.5))
+
+ExportBar
+
+# speichern der Grafik als png im Ordner output
+#png(filename = "output/ExportvolumenNachJahr.png", width = 624, height = 468)
+#ExportBar + theme_srf() + sources("SECO", vpos = "top")+theme(axis.text.x = element_text(angle=-30, #vjust=0.5))
+#dev.off()
+rm(ExportBar, volmio_1)
+```
+
+#### Empfängerländer
+
+An wie viele verschiedene Länder hat die Schweiz pro Jahr Kriegsgüter exportiert?
+
+```{r, fig.height = 7}
+# Berechne Anzahl der belieferten Länder pro Jahr
+
+AnzahlLaender <- list() # leere Zielliste
+for(i in 2000:2016){ # Schleife über die Daten aus den Jahren 2000 bis 2014
+AnzahlLaender[[i]] <- length(unique(export_restructured[export_restructured$Jahr==i,]$Land)) # Anzahl der Länder werden nach Jahr berechnet und das Ergebnis in der Liste abgelegt
+}
+
+Anzahldat <- do.call(rbind.data.frame, AnzahlLaender[2000:2016]) # Anzahlliste zu data frame machen
+names(Anzahldat) <- c("Anzahl") # Namen der Anzahlspalte ändern
+Anzahldat$Jahr <- 2000:2016 # Zweite Spalte mit Jahreszahlen hinzufügen
+Anzahldat # data frame mit Anzahl belieferter Länder pro Jahr
+
+# Barplot der Azahl belieferter Länder nach Jahr
+AnzahlLaenderBar <- ggplot(data = Anzahldat, aes(x = Jahr, y = Anzahl)) + 
+   geom_bar(stat = "identity") + 
+   xlab("Jahr") +
+   scale_y_continuous(name="Länderanzahl")+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   geom_text(aes(label = Anzahl, vjust=-0.2), size = 4)+
+   ggtitle(paste("Belieferte Länder nach Jahr")) +
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme(axis.text.x = element_text(angle=0, vjust=0.5))
+   
+AnzahlLaenderBar
+
+# speichern der Grafik als png im Ordner output
+#png(filename = "output/AnzahlLaender.png", width = 624, height = 468)
+#AnzahlLaenderBar + theme_srf() 
+#dev.off()
+
+# Durchschnitt belieferter Länder pro Jahr
+sum(Anzahldat$Anzahl)/length(Anzahldat$Anzahl)
+rm(Anzahldat, laender, AnzahlLaender, AnzahlLaenderBar, i)
+```
+
+##### Stammkunden
+
+Welche Länder wurden in jedem Jahr aufs Neue beliefert?
+
+```{r}
+Stammlaender <- list() # leere Zielliste
+for(i in 2000:2016){
+  Stammlaender[[i]] <- unique(export_restructured[export_restructured$Jahr==i,]$Land) # Länder werden nach Jahren sortiert und in der Liste abgelegt
+}
+
+Stamm <- Reduce(intersect, Stammlaender[2000:2016]) # Vektor der Länder, die in jedem Jahr beliefert wurden
+
+length(Stamm) # Anzahl der Länder, die in jedem Jahr unter den Belieferten zu finden sind
+rm(Stamm, Stammlaender)
+```
+
+Rüstungsunternehmen aus der Schweiz belieferten im Zeitraum von 2000 bis 2016 127 verschiedene Länder mit Kriegsgütern, im Schnitt jährlich 67 Länder. Es gibt 28 Stammländer, an die jedes Jahr geliefert wurde.  
+
+Mit welchen 10 Ländern wird am meisten gehandelt?
+
+```{r, fig.height = 8}
+# 2000-2016 gesamt
+# erstelle data frame, der nur die zehn Länder mit den höchsten Exportvolumen des Zeitabschnitts enthält  
+
+Top10 <- export_restructured %>% 
+   group_by(Land) %>%
+   summarize(value = sum(value)) %>%
+   arrange(desc(value)) %>%
+   slice(1:10)
+
+# filtere alle Informationen nur dieser zehn Länder aus den Gesamtdaten heraus
+ laenderSummen10Sortiert <- export_restructured  %>%
+                            filter(Land %in% Top10$Land) %>%
+                            group_by(Land, variable) %>% # ordne auch nach Kategorie
+                            summarize(value = sum(value)) %>% 
+                            ungroup()
+ 
+# definiere eine Funktion, die in filter() als "alles, außer" genutzt werden kann
+'%!in%' <- function(x,y)!('%in%'(x,y)) 
+ 
+# definiere data frame, der alle anderen Länder enthält
+laenderAndere <- export_restructured %>%
+                filter(Land %!in% Top10$Land) %>%
+                group_by(variable) %>%
+                summarize(value = sum(value)) %>%
+                arrange(desc(value)) %>% 
+                select(variable, value) %>% 
+                ungroup()
+laenderAndere$Land <- c("Andere") # benenne die Länder in "Andere" um
+
+# Reihenfolge ändern
+laenderAndere <- laenderAndere %>% select(Land, variable, value)
+
+# binde die data frames zu einem 
+df1 <- laenderSummen10Sortiert[order(match(laenderSummen10Sortiert$Land, Top10$Land)), ]
+laenderSummen10SortiertForBar <- rbind(df1,  laenderAndere) 
+
+# barplot des Exportvolumens der zehn Länder mit dem größten Exportvolumen für das Zeitintervall sowie der Summe der Exportvolumen aller anderen Länder eingefärbt nach Kategorien
+valmio_2 <- laenderSummen10SortiertForBar$value/1000000000 # Exportvolumen in Millionen
+laenderSummenBar <- ggplot(data = laenderSummen10SortiertForBar, aes(x = factor(Land, levels=unique(as.character(Land)) ), y = valmio_2, fill = factor(variable), order = variable)) + 
+   geom_bar(stat = "identity") +
+   scale_y_continuous(name="Exportvolumen in Mrd. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen nach Land und Kategorie\n 2000-2016") +
+   theme(axis.text.x = element_text(angle=40, vjust=1, hjust=1, size=10))+
+   guides(fill=guide_legend(title="Kategorie", reverse = T))+
+   xlab("Land")
+
+laenderSummenBar 
+ 
+# speichern der Grafik als png im Ordner output   
+#png(filename = "output/ExportvolumenNachJahrTop5.png", width = 624, height = 468)
+#laenderSummenBar
+#dev.off()
+
+# erstelle nach dem gleichen Muster die gleiche Grafik über eine Schleife für jedes Jahr einzeln
+Top10_ <- list()
+Laendersummen_ <- list()
+laenderAndere_ <- list()
+laenderSummen10SortiertForBar_ <- list()
+plot <- list()
+
+for(i in 2000:2016){
+data <- export_restructured[export_restructured$Jahr == i,]
+  
+Top10_[[i]] <- data %>%
+               group_by(Land) %>%
+               summarize(value = sum(value)) %>%
+               arrange(desc(value)) %>%
+               slice(1:10) 
+
+yearsTop10 <- as.data.frame(Top10_[[i]])
+ 
+Laendersummen_[[i]] <- data %>%
+                       dplyr::filter(Land %in% yearsTop10$Land) %>%
+                       group_by(Land, variable) %>%
+                       summarize(value = sum(value))%>%
+                       arrange(desc(value)) %>%
+                       slice(1:10) %>% 
+                       ungroup()
+ 
+ laenderAndere_[[i]] <- data %>%
+                        filter(Land %!in% yearsTop10$Land) %>%
+                        group_by(variable) %>%
+                        summarize(value = sum(value)) %>%
+                        arrange(desc(value)) %>% 
+                        select(variable, value) %>% 
+                        ungroup()
+laenderAndere_[[i]]$Land <- c("Andere")
+
+# Reihenfolge ändern
+laenderAndere_[[i]] <- laenderAndere_[[i]] %>% select(Land, variable, value)
+
+laenderSummen10SortiertForBar_[[i]] <- rbind( Laendersummen_[[i]][order(match( Laendersummen_[[i]]$Land, yearsTop10$Land)), ], laenderAndere_[[i]]) 
+
+valmio_4 <- laenderSummen10SortiertForBar_[[i]]$value/1000000
+plot[[i]] <- ggplot(data = laenderSummen10SortiertForBar_[[i]], aes(x = factor(Land, levels=unique(as.character(Land)) ), y = valmio_4, fill = factor(variable), order = variable)) + 
+   geom_bar(stat = "identity") +
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle(paste("Exportvolumen der Top 10\n", i)) +
+   theme(axis.text.x = element_text(angle=40, vjust=1, hjust=1, size=10))+
+   guides(fill=guide_legend(title="Kategorie", reverse = T))+
+   xlab("Land")
+}
+
+# Grafik für:
+# 2000
+#plot[[2000]]
+# 2001
+#plot[[2001]]
+# 2002
+#plot[[2002]]
+# 2003
+#plot[[2003]]
+# 2004
+#plot[[2004]]
+# 2005
+#plot[[2005]]
+# 2006
+# plot[[2006]]
+# 2007
+#plot[[2007]]
+# 2008
+#plot[[2008]]
+# 2009
+#plot[[2009]]
+# 2010
+#plot[[2010]]
+# 2011
+#plot[[2011]]
+# 2012
+#plot[[2012]]
+# 2013
+#plot[[2013]]
+# 2014
+#plot[[2014]]
+# 2015
+#plot[[2015]]
+# 2016
+#plot[[2016]]
+rm(Top10, df1, laenderAndere, laenderAndere_, laenderSummen10Sortiert, laenderSummen10SortiertForBar, laenderSummen10SortiertForBar_, yearsTop10, data, Laendersummen_, laenderSummenBar, plot, Top10_, valmio_2, valmio_4)
+```
+
+Die Top 10 2000-2016 sind vor allem europäische Länder sowie die USA, Saudi-Arabien und die Vereinigten Arabischen Emirate. Mit großem Abstand auf Platz 1 befindet sich Deutschland, das hauptsächlich KM6 (Panzer- und andere Landfahrzeuge) und KM3 (Munition für die in KM 1, 2 oder 12 erfassten Waffen) gekauft hat. Die Emirate und die USA fallen durch ihren überdurchschnittlichen Anteil von KM10 (Bemannte und unbemannte Luftfahrzeuge inkl. entsprechende Triebwerke) auf. 14/17 Mal befindet sich Deutschland auf Platz 1.
+
+
+Wie viel Prozent des Exportvolumens fallen auf die 5 Länder mit dem grössten Exportvolumen? 
+
+```{r}
+# 2000 bis 2016 gesamt
+laenderSummen5Sortiert <- export_restructured %>%
+   group_by(Land) %>%
+   summarize(value = sum(value)) %>%
+   arrange(desc(value)) %>%
+   slice(1:5)
+ 
+laenderSummen5Sortiert # betrachte data frame
+
+# Anteil der Ausfuhren an die fünf Länder mit dem größten Exportvolumen gesamt 2000-2016 am Gesamtexportvolumen
+sum(laenderSummen5Sortiert$value)/sum(export_restructured$value) * 100
+ 
+# berechne Exportsummen der Top 5 gesamt für jedes Jahr
+AnteilTop5 <- list()
+ for(i in 2000:2016){  
+  laenderSummen5proJahr <- export_restructured[export_restructured$Jahr == i,] %>%
+   group_by(Land) %>%
+   summarize(value = sum(value)) %>%
+   arrange(desc(value)) %>%
+   slice(1:5)
+
+AnteilTop5[[i]] <-  paste(sum(laenderSummen5proJahr$value)/sum(export_restructured[export_restructured$Jahr == i,]$value) * 100, "%") 
+ }
+
+# Merge Liste der Ergebnisse zu überscihtlicherem data frame
+LAnteilTop5 <- do.call(rbind.data.frame, AnteilTop5[2000:2016]) 
+names(LAnteilTop5) <- c("Anteil") # Namen der Anteilsspalte ändern
+LAnteilTop5$Jahr <- 2000:2016 # Zweite Spalte mit Jahreszahlen hinzufügen
+
+LAnteilTop5
+
+# Barchart: Wie hat sich das Exportvolumen der Top 5 pro Jahr verändert?
+# 2000 bis 2016 gesamt
+Top5 <- export_restructured  %>% 
+   filter(Land %in% laenderSummen5Sortiert$Land) %>% 
+   group_by(Jahr, Land) %>%
+   summarize(value = sum(value))
+
+valmio_14 <- Top5$value/1000000
+Top5bar <- ggplot(data = Top5, aes(x = Jahr, y = valmio_14, fill = Land)) + 
+   geom_bar(stat = "identity") + 
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen nach Ländern \n Top 5 2000-2016") +
+   guides(fill=guide_legend(title="Länder", reverse = T))+
+   xlab("Jahr")
+
+Top5bar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/Top5nachLandundJahr.png", width = 624, height = 468)
+#Top5bar + theme_srf() + sources("SECO", vpos = "top")
+#dev.off()
+rm(laenderSummen5proJahr, laenderSummen5Sortiert, LAnteilTop5, Top5, AnteilTop5, i, Top5bar, valmio_14, valmio_2)
+```
+
+Die Top 5 2000-2016 machen fast 47% des Exportvolumens aus. Der Anteil pro Jahr unterliegt minimalen Schwankungen, ist insgesamt von 2000 auf 2014 um knapp 19% gestiegen und 2015 wieder um 12 gesunken. 
+
+#### KM-Kategorien
+
+Wie verteilt sich das Exportvolumen auf die einzelnen Kategorien? 
+
+```{r, fig.height = 7}
+# 2000-2016 gesamt 
+
+Kategorie_Summen <- export_restructured  %>% 
+   group_by(variable) %>%
+   summarize(value = sum(value)) %>% # Exportvolumensummen pro Kategorie berechnen
+   arrange(desc(value)) %>% # der Größe nach sortieren
+   mutate(variable = factor(variable, levels = variable)) # Kategorie in Faktor konvertieren
+
+# Barplot
+valmio_5 <- Kategorie_Summen$value/1000000000
+Kategorie_SummenBar <- ggplot(data = Kategorie_Summen, aes(x = variable, y = valmio_5)) + 
+   geom_bar(stat = "identity") + 
+   geom_text(aes(label = value, vjust=-0.2), size = 3)+
+   xlab("Kategorie") +
+   scale_y_continuous(name="Exportvolumen in Mrd. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen pro Kategorie\n2000-2016") +
+   theme(axis.text.x = element_text(angle=45, vjust=0.5))
+ 
+Kategorie_SummenBar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/VolumenanteilnachKat.png", width = 624, height = 468)
+#Kategorie_SummenBar + theme_srf() + sources("SECO", vpos = "top")
+#dev.off()
+ 
+# Anteile der Kategorien an Gesamtvolumen berechnen
+
+gesamt <- sum(Export$value) # Berechnung der Summe aller Exporte 2000-2016
+
+Kategorie_Anteil <- export_restructured  %>% 
+   group_by(variable) %>%
+   summarize(value = (sum(value)/gesamt)*100) %>% 
+   mutate(variable = factor(variable, levels = variable))
+
+Kategorie_Anteil 
+
+# Anteile der Kategorien nach Jahr
+KatexportNachJahr <- export_restructured  %>% 
+   group_by(Jahr, variable) %>%
+   summarize(value = sum(value)) %>%
+   mutate(variable = factor(variable))
+
+valmio_6 <- KatexportNachJahr$value/1000000 # Exportvolumen in Millionen
+KatexportNachJahrBar <- ggplot(data = KatexportNachJahr, aes(x = Jahr, y = valmio_6, fill = factor(variable), order = variable)) + 
+  geom_bar(stat = "identity") + 
+   xlab("Jahr") +
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen nach Jahr\n aufgeschlüsselt nach Kategorie") +
+   guides(fill=guide_legend(title="Kategorie", reverse = T))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme(axis.text.x = element_text(angle=0, vjust=0.5))
+   
+KatexportNachJahrBar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/VolumenanteilnachKatproJahr.png", width = 624, height = 468)
+#KatexportNachJahrBar + theme_srf() + sources("SECO", vpos = "top")
+#dev.off()
+
+####### 5 Top Kat
+#nach Jahr
+Top5_Kat <- export_restructured  %>% 
+   group_by(variable) %>%
+   summarize(value = sum(value)) %>%
+   arrange(desc(value)) %>%
+   mutate(variable = factor(variable, levels = variable)) %>%
+   slice(1:5)
+   
+# benenne alle Kategorien, die nicht unter den Top 5 sind in "Andere" und summiere ihre Exportvolummen  
+TopKatexportNachJahr <-  KatexportNachJahr %>% 
+  mutate(variable = ifelse(variable %in% Top5_Kat$variable, as.character(variable), "Andere")) %>% 
+  group_by(Jahr, variable)%>%
+  summarize(value = sum(value))
+  
+# Barchart der Anteile der Kategorien am Gesamtexportvolumen nach Jahr, wobei unter "Andere" alle Kategorien zusammengefasst sind, die nicht unter den Top 5 sind
+valmio_7 <- TopKatexportNachJahr$value/1000000
+TopKatexportNachJahrBar <- ggplot(data = TopKatexportNachJahr, aes(x = Jahr, y = valmio_7, fill = factor(variable))) + 
+  geom_bar(stat = "identity") + 
+   xlab("Jahr") +
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen nach Jahr\n aufgeschlüsselt nach Kategorie") +
+   guides(fill=guide_legend(title="Kategorie", reverse = T))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme(axis.text.x = element_text(angle=0, vjust=0.5))+
+   scale_fill_manual(labels = rev(c("Landfahrzeuge", "Munition","Feuerleitgeräte", "Waffen aller Kaliber", "Luftfahrzeuge", "Andere")) , # gebe Kategorien für Legende einen Namen
+   values = c( # ordne Farben zu
+ "KM6" = "#FFDC00",
+ "KM3" = "#FF0C10",
+ "KM5" = "#0425B2",
+ "KM2" = "#009933",
+ "KM10"  = "#33E724",
+ "Andere" = "#B7DE00"
+  ), drop = F)
+   
+TopKatexportNachJahrBar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/TopVolumenanteilnachKatproJahr.png", width = 624, height = 468)
+#TopKatexportNachJahrBar + theme_srf() + sources("SECO", vpos = "top")+theme(axis.text.x = #element_text(angle=-30, vjust=0.5))
+#dev.off()
+rm(Export, Kategorie_Anteil, Kategorie_Summen, KatexportNachJahr, TopKatexportNachJahr, TopKatexportNachJahrBar, gesamt, Kategorie_SummenBar, KatexportNachJahrBar, valmio_5, valmio_6, valmio_7)
+```
+
+Insgesamt exportierte die Schweiz im Zeitintervall 2000-2016 KM6 (Panzer- und andere Landfahrzeuge; 2 Milliarden) und KM3 (Munition für die in KM 1, 2 oder 12 erfassten Waffen; 2 Milliarden) am meisten. Starker Anstieg von KM10 (Bemannte und unbemannte Luftfahrzeuge inkl. entsprechende Triebwerke) in den Jahren 2011 und 2012, ab 2008 insgesamt mehr aber vor allem KM6. 2013 wieder ungefähr das gleiche Exportvolumen wie 2007, 2014 wieder mehr.
+
+##### Kategorien über Zeit, Liniencharts
+
+ 
+```{r}
+km_names <- list(
+  'KM6'="Landfahrzeuge",
+  'KM3'="Munition",
+  'KM5'="Feuerleitgeräte",
+  'KM2'="Waffen aller Kaliber",
+  'KM10'="Luftfahrzeuge"
+)
+km_labeller <- function(variable, value){
+ return(km_names[value])
+}
+data_for_line_plot <- export_restructured %>% 
+  group_by(Jahr, variable) %>% 
+  summarize(value = sum(value)) %>% 
+  ungroup() %>% 
+  filter(variable %in% Top5_Kat$variable) %>% 
+  mutate(variable = factor(variable, levels = Top5_Kat$variable))
+
+p <- ggplot(data_for_line_plot, aes(x = Jahr, y = value)) +
+  geom_line() +
+  facet_grid(variable ~ ., scales = "free_y", labeller = km_labeller) +
+  ylab("Exportiertes Volumen") +
+  xlab("Jahr") +
+  ggtitle("Exportschlager") +
+  scale_y_continuous(labels = comma) + 
+  theme_minimal()
+  # ylim(c(0, max(data_to_plot$pop_year)))
+p
+
+rm(data_for_line_plot, km_names, p, Top5_Kat, km_labeller)
+```
+
+##### Nur Naher Osten
+
+```{r}
+# definiere den nahen Osten 
+neareastcountries <- c("Kuwait", "Bahrain", "Oman", "Katar", "Saudi-Arabien", "Vereinigte Arabische Emirate", "Jemen", "Israel", "Jordanien", "Libanon", "Syrien", "Ägypten", "Iran", "Türkei", "Irak")
+```
+
+Summe nach Jahr für den nahen Osten
+
+```{r, fig.height = 8}
+OSTexportvolumenNachJahr <- export_restructured  %>% 
+   filter(Land %in% neareastcountries) %>% 
+   group_by(Jahr, variable) %>%
+   summarize(value = sum(value))
+
+# Barchart des Exportvolumens pro Jahr und aufgeschlüsselt nach Kategorien für die Länder des Nahen Ostens 
+valmio_8 <- OSTexportvolumenNachJahr$value/1000000
+OSTexportvolumenNachJahrBar <- ggplot(data = OSTexportvolumenNachJahr, aes(x = Jahr, y = valmio_8, fill = factor(variable), order = variable)) + 
+   geom_bar(stat = "identity") + 
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen pro Kategorie \n Naher Osten") +
+   guides(fill=guide_legend(title="Kategorie", reverse = T))+
+   xlab("Jahr")
+   
+OSTexportvolumenNachJahrBar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/OstnachJahr.png", width = 624, height = 468)
+#OSTexportvolumenNachJahrBar + theme_srf() + sources("SECO", vpos = "top")
+#dev.off()
+rm(OSTexportvolumenNachJahrBar, valmio_5, valmio_6, valmio_7, valmio_8)
+```
+
+Exporte in den Nahen Osten boomen ab 2009, 2011 wurden dann vor allem Güter der Kategorie KM10 (Bemannte und unbemannte Luftfahrzeuge inkl. entsprechende Triebwerke) exportiert, was das grösste Volumen in diesem Jahr massgeblich beeinflusst hat. 2012 wieder leicht weniger KM10, 2013 und 2014 gar nicht mehr und dadurch wieder Werte wie am Boomanfang. 2016 Rückgang von KM4 und KM2, dafür Anstieg von KM5 (Feuerleitgeräte, v.a. Saudi-Arabien)
+
+#### Auswertungen Naher Osten
+
+Wie viel Prozent des Exportvolumens fällt auf den Nahen Osten? 
+
+```{r, fig.height = 8}
+
+# 2000 bis 2016 gesamt
+sum(OSTexportvolumenNachJahr$value) #Summe Exportvolumen an den Nahen Osten 2000-2016
+sum(OSTexportvolumenNachJahr$value)/sum(export_restructured$value) * 100 #Anteil in Prozent
+ 
+# für jedes Jahr
+AnteilOST <- list()
+ for(i in 2000:2016){  
+AnteilOST[[i]] <- sum(OSTexportvolumenNachJahr[OSTexportvolumenNachJahr$Jahr == i,]$value)/sum(export_restructured[export_restructured$Jahr == i,]$value) * 100  
+ }
+
+# Ergebnisse zu übersichtlichem data frame mergen
+LAnteilOST <- do.call(rbind.data.frame, AnteilOST[2000:2016]) 
+names(LAnteilOST) <- c("Anteil") # Namen der Anteilsspalte ändern
+LAnteilOST$Jahr <- 2000:2016 # Zweite Spalte mit Jahreszahlen hinzufügen
+
+LAnteilOST
+
+sum(LAnteilOST[1:9, 1])/length(LAnteilOST[1:9, 1]) # durchschnittlicher Anteil 2000-2008
+sum(LAnteilOST[10:13, 1])/length(LAnteilOST[10:13, 1]) # durchschnittlicher Anteil 2009-2012
+sum(LAnteilOST[14:16, 1])/length(LAnteilOST[14:16, 1]) # durchschnittlicher Anteil 2013-2016
+
+# Exportvolumen des Nahen Ostens in Vergelich zum Gesamtexportvolumen setzen
+# Summe der Exportvolumen des Nahen Ostens gesamt pro Jahr
+ExportOST <- export_restructured  %>% 
+   filter(Land %in% neareastcountries) %>% 
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+ExportOST$Länder <- c("Naher Osten")  
+
+# alle Länder, die nicht zum Nahen Osten gehören, unter "Andere" zusammenfassen und ihre Summe der Exportvolumen pro Jahr berechnen
+ExportGesoOst <- export_restructured  %>%
+   filter(Land %!in% neareastcountries) %>%
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+ExportGesoOst$Länder <- c("Andere") 
+
+# beide Datensätze zusammenführen
+ExportanteilOstforBar <- rbind(ExportGesoOst, ExportOST)
+
+# barplot des Anteils am Gesamtexportvolumen des Nahen Ostens
+valmio_10 <- ExportanteilOstforBar$value/1000000
+ExportanteilOstBar <- ggplot(data = ExportanteilOstforBar, aes(x = Jahr, y = valmio_10, fill = factor(Länder))) +  
+   geom_bar(stat = "identity") + 
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Anteil am Gesamtexportvolumen \n Naher Osten") +
+   guides(fill=guide_legend(title="Länder", reverse = T))+
+   xlab("Jahr")+
+   scale_fill_manual(values = c("#0099ff","#fcc000")) 
+  
+ExportanteilOstBar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/OstanteilanGesamtnachJahr.png", width = 624, height = 468)
+#ExportanteilOstBar + theme_srf() + sources("SECO", vpos = "top")+theme(axis.text.x = #element_text(angle=-30, vjust=0.5))
+#dev.off()
+
+
+#Wie hat sich das Exportverhalten der Länder des Nahen Osten pro Jahr verändert?
+OST <- export_restructured  %>% 
+   filter(Land %in% neareastcountries) %>% 
+   group_by(Jahr, Land) %>%
+   summarize(value = sum(value))
+
+valmio_11 <- OST$value/1000000
+OSTbar <- ggplot(data = OST, aes(x = Jahr, y = valmio_11, fill = Land)) + 
+   geom_bar(stat = "identity")+
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle(paste("Exportvolumen nach einzelnen Ländern \n Naher Osten")) +
+   guides(fill=guide_legend(title="Länder", reverse = T))+
+   xlab("Jahr")
+   
+OSTbar
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/OstnachLandundJahr.png", width = 624, height = 468)
+#OSTbar + theme_srf() + sources("SECO", vpos = "top")
+#dev.off()
+
+## wie viel Prozent des Exportvolumens an den nahen Osten fällt allein auf die Emirates und Saudi-Arabien?
+EmSau <- c("Vereinigte Arabische Emirate", "Saudi-Arabien")
+  
+  EmSauSumm <- export_restructured  %>% 
+   filter(Land %in% EmSau) %>% 
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+  
+sum(EmSauSumm$value)/sum(OST$value)*100
+
+rm(EmSauSumm, EmSau, ExportGesoOst, ExportanteilOstBar, ExportanteilOstforBar, ExportOST, OST, LAnteilOST, i, OSTexportvolumenNachJahr, AnteilOST, OSTbar, valmio_10, valmio_11, neareastcountries)
+```
+
+Von den Gesamtexporten von 2000 bis 2016 gingen ca. 13% allein an Länder des nahen Ostens. In LAnteilOST sieht man deutlich, wie der Volumenanteil von durchschnittlich 5% in den Jahren 2009-2012 auf im Schnitt 26% ansteigt und dann von 2013-2016 durchschnittlich wieder auf 7% fällt.
+85% aller Exporte, die an Länder des Nahen Ostens gingen, waren für die Vereinigten Arabischen Emirate oder Saudi-Arabien bestimmt. Saudi-Arabien bestellte vor allem 2009 und 2010 Kriegsgüter aus der Schweiz, die Emirate machten 2011 und 2012 den grössten Anteil aus.
+
+#### Nach Kontinenten 
+
+Wie verteilt sich das Exportvolumen auf die Kontinente?
+
+```{r, fig.height = 8}
+
+# Reinladen des Excelfiles, das in jeder Spalte die Ländernamen eines anderen Kontinenten beinhaltet
+kontinente <- read_excel("input/kontinente.xlsx")
+
+### noch vereinfachen?
+  Europa <- export_restructured %>% 
+   filter(Land %in% kontinente$Europa) %>% 
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+  
+  Asien <- export_restructured %>% 
+   filter(Land %in% kontinente$Asien) %>% 
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+  
+  Mittelamerika <- export_restructured %>% 
+   filter(Land %in% kontinente$Mittelamerika) %>%
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+  
+  Afrika <- export_restructured %>% 
+   filter(Land %in% kontinente$Afrika) %>%
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+   
+  Nordamerika <- export_restructured %>% 
+   filter(Land %in% kontinente$Nordamerika) %>%
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+    
+  Südamerika <- export_restructured %>% 
+   filter(Land %in% kontinente$Südamerika) %>%
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+     
+  AustralienOzeanien <- export_restructured %>% 
+   filter(Land %in% kontinente$AustralienOzeanien) %>%
+   group_by(Jahr) %>%
+   summarize(value = sum(value))
+
+regions <- melt(list("Europa" = Europa, "Asien" = Asien, "Mittelamerika" = Mittelamerika,  
+                     "Afrika" = Afrika, "Nordamerika" = Nordamerika, "Südamerika" = Südamerika,   
+                     "Australien und Ozeanien" = AustralienOzeanien), id.vars = "Jahr")
+
+valmio_13 <- regions$value/1000000
+regionvergleich <- ggplot(data = regions, aes(x = Jahr, y = valmio_13, fill = as.factor(L1), order = L1)) + 
+   geom_bar(stat = "identity") +
+   scale_y_continuous(name="Exportvolumen in Mio. CHF", labels=function(x) format(x, big.mark = "'", scientific = FALSE))+
+   scale_x_continuous(breaks=seq(2000,2016,1),labels=abs(seq(2000,2016,1))) + 
+   theme_srf_small()+
+   sources_small("SECO", vpos = "top") +
+   ggtitle("Exportvolumen nach Kontinenten") +
+   guides(fill=guide_legend(title="", reverse = T))+
+   xlab("Jahr")+
+    scale_fill_manual(values = c(
+    "Australien und Ozeanien" = "#0425B2",
+    "Südamerika" = "#FF8901",
+    "Nordamerika" = "#B7DE00",
+    "Mittelamerika"  = "#33E724",
+    "Afrika" = "#FFDC00",
+    "Asien" = "#FF0C10",
+    "Europa" = "#009933"
+  ), drop = F)+
+  theme(axis.text.x = element_text(angle=-30, vjust=0.5))
+   
+regionvergleich
+
+# speichern der Grafik als png im Ordner output 
+#png(filename = "output/VolumennachKontinenten.png", width = 624, height = 468)
+#regionvergleich + theme_srf() + sources("SECO", vpos = "top")+theme(axis.text.x = element_text(angle=-30, #vjust=0.5))
+#dev.off()
+rm(Afrika, Asien, AustralienOzeanien, Europa, Nordamerika, Mittelamerika, regions, Südamerika, kontinente, valmio_13, regionvergleich)
+```
+Den grössten Anteil am Exportvolumen nehmen europäische Länder ein. Um 2011 herum nehmen Ausfuhren an asiatische Länder zu. Der Rückgang des Exportvolumens von 2015 an ist u.a. dem Rückgang von Auslieferungen an Europa geschuldet. Die Anteile von Asien 2014 bis 2016 dürften zum Grossteil an Indien und Indonesien sowie Pakistan gehen. 
+
