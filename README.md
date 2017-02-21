@@ -1,4 +1,4 @@
-# 2017-02-dual-use
+# 2017-02-kriegsmaterial
 
 ## Artikel
 
