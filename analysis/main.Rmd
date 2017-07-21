@@ -3,14 +3,26 @@ subtitle: "Vorprozessierung und Analyse"
 title: "Export von Kriegsmaterial aus der Schweiz"
 author: "SRF Data, Timo Grossenbacher (timo.grossenbacher@srf.ch), Marie-Louise Timcke (marie.timcke@journocode.com)"
 date: "02/21/2016"
-output: html_document
+output:
+  html_document:
+    code_folding: show
+    theme: simplex
+    toc: yes
+    comment: NA
+    echo: TRUE
+    message: FALSE
+    warning: FALSE
+    fig.width: 10
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 ---
 
-```{r,  echo=FALSE, warning=FALSE, message=FALSE}
-knitr::opts_chunk$set(comment = NA, message = F, warning = F, fig.width = 10)
-options("getSymbols.warning4.0"=FALSE)
+```{r, echo=FALSE}
+project_name <- "2017-02-kriegsmaterial"
 ```
 
+---
 
 ### Vorbemerkungen
 
@@ -77,41 +89,97 @@ Andere |  KM9, KM11-KM15, KM17-KM22, Kryogenische (Tieftemperatur-) und supralei
 
 ### Vorbereitungen
 
-#### Packages installieren
+```{r preparations, echo=FALSE}
+detach_all_packages <- function() {
+  basic_packages_blank <-  c("stats",
+                             "graphics",
+                             "grDevices",
+                             "utils",
+                             "datasets",
+                             "methods",
+                             "base")
+  basic_packages <- paste("package:", basic_packages_blank, sep = "")
 
-```{r}
-if(!require(dplyr)) {
-  install.packages("dplyr", repos="http://cran.us.r-project.org")
-  require(dplyr)
+  package_list <- search()[
+    ifelse(unlist(gregexpr("package:", search())) == 1, TRUE, FALSE)]
+
+  package_list <- setdiff(package_list, basic_packages)
+
+  if (length(package_list) > 0)  for (package in package_list) {
+    detach(package, character.only = TRUE, unload = TRUE)
+    print(paste("package ", package, " detached", sep = ""))
+  }
 }
-if(!require(tidyr)) {
-  install.packages("tidyr", repos="http://cran.us.r-project.org")
-  require(tidyr)
+
+detach_all_packages()
+
+rm(list = ls(all.names = TRUE))
+# nolint start
+# Hier Arbeitsverzeichnis anpassen!
+path_to_wd <- switch(EXPR = system2("whoami", stdout = TRUE),
+                     "johndoe" = "~",
+                     NULL)
+# nolint end
+if ( is.null(path_to_wd) ) {
+  print("WARNING: No working directory specified for current user")
+} else {
+  setwd(path_to_wd)
 }
-if(!require(ggplot2)) {
-  install.packages("ggplot2", repos="http://cran.us.r-project.org")
-  require(ggplot2)
+```
+
+### Packages definieren
+
+```{r define packages}
+
+cat("
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readxl)
+library(stringr)
+library(scales)
+library(grid)
+library(reshape)",
+file = "manifest.R")
+
+package_date <- "2017-06-01"
+
+```
+
+### Packages installieren
+
+```{r install packages}
+if (!require(checkpoint)) {
+  if (!require(devtools)) {
+    install.packages("devtools", repos = "http://cran.us.r-project.org")
+    require(devtools)
+  }
+  devtools::install_github("checkpoint",
+                           username = "RevolutionAnalytics",
+                           ref = "v0.3.2",
+                           repos = "http://cran.us.r-project.org")
+  require(checkpoint)
 }
-if(!require(readxl)) {
-  devtools::install_github("hadley/readxl")
-  require(readxl)
+# nolint start
+if (!dir.exists("~/.checkpoint")) {
+  dir.create("~/.checkpoint")
 }
-if(!require(stringr)) {
-  install.packages("stringr", repos="http://cran.us.r-project.org")
-  require(stringr)
-}
-if(!require(scales)) {
-  install.packages("scales", repos="http://cran.us.r-project.org")
-  require(scales)
-}
-if(!require(grid)) {
-  install.packages("grid", repos="http://cran.us.r-project.org")
-  require(grid)
-}
-if(!require(reshape)) {
-  install.packages("reshape", repos="http://cran.us.r-project.org")
-  require(reshape)
-}
+# nolint end
+checkpoint(snapshotDate = package_date,
+           project = path_to_wd,
+           verbose = T,
+           scanForPackages = T,
+           use.knitr = F)
+rm(package_date)
+```
+
+
+### Packages laden
+
+```{r load packages}
+source("manifest.R")
+unlink("manifest.R")
+sessionInfo()
 ```
 
 
@@ -119,7 +187,7 @@ if(!require(reshape)) {
 
 #### Daten reinladen und typisieren
 
-```{r}
+```{r load data}
 # 2000 - 2016
 
 #setwd("/Users/MarieLou/SRF/1601-arms-exports/preprocessing")
@@ -143,7 +211,7 @@ rm(sheets, i ,k)
 
 #### Restrukturieren
 
-```{r}
+```{r restructure}
 # # Daten kondensieren (breit nach lang)
 export_restructured <- export %>% 
   as.data.frame() %>% 
@@ -155,7 +223,7 @@ rm(export)
 #### Länder-Duplikate entfernen
 Wie viele Länder gibt es? 
 
-```{r}
+```{r remove duplicate countries}
 laender <- arrange(export_restructured, Land) # nach Ländernamen sortieren
 unique(laender$Land) # vorkommende Ländernamen anzeigen: gibt es Duplikate
 length(unique(laender$Land)) # wie viele Länder gibt es insgesamt (mit Duplikaten)?
@@ -255,7 +323,7 @@ export_restructured$Land[export_restructured$Land == "Surinam"] <- "Suriname"
 
 Wie viele Länder gibt es jetzt noch? 
 
-```{r}
+```{r check number of countries}
 length(unique(export_restructured$Land)) # Anzahl Länder
 sort(unique(export_restructured$Land)) # Überblick über die Ländernamen, um eventuell übersehene Duplikate aufzuspüren
 ```
@@ -264,7 +332,7 @@ sort(unique(export_restructured$Land)) # Überblick über die Ländernamen, um e
 
 #### Output als CSV
 
-```{r}
+```{r output export_restructured}
 export_csv <- export_restructured %>% dplyr::rename(Kategorie = variable, Wert = value)
 write.csv(export_csv, file = "output/export.csv", fileEncoding = "utf-8", row.names = F)
 rm(export_csv)
@@ -272,7 +340,7 @@ rm(export_csv)
 
 #### SRF Theme für die Grafiken vorbereiten
 
-```{r}
+```{r define ggplot theme}
 theme_srf <- function(base_size = 10, base_family = "Arial", ...) {
   theme_bw() +
     theme(
@@ -290,7 +358,6 @@ theme_srf <- function(base_size = 10, base_family = "Arial", ...) {
       legend.key = element_blank(),
       legend.key.width = unit(c(0.7), units = "cm"),
       legend.key.height = unit(c(0.5), units = "cm"),
-      axis.line = element_blank(),
       panel.grid.minor = element_blank(), 
       panel.margin = unit(c(0.4,0.4,0.4,0.4), units = "mm"),
       plot.margin = unit(c(0.9,0.9,0.9,0.9), "cm"),
@@ -338,7 +405,7 @@ sources_small <- function(text = "SECO", vpos = "top"){
 
 Wie hat sich das Exportvolumen über die Jahre verändert?
 
-```{r, fig.height = 8}
+```{r export volume change, fig.height = 8}
 Export <- export_restructured %>% 
    group_by(Jahr) %>% # ordnet die Daten nach Jahren an
    dplyr::summarise(value = sum(value)) # fasst Exportvolumen nach Jahren zusammen
@@ -373,7 +440,7 @@ rm(ExportBar, volmio_1)
 
 An wie viele verschiedene Länder hat die Schweiz pro Jahr Kriegsgüter exportiert?
 
-```{r, fig.height = 7}
+```{r receiving countries, fig.height = 7}
 # Berechne Anzahl der belieferten Länder pro Jahr
 
 AnzahlLaender <- list() # leere Zielliste
@@ -414,7 +481,7 @@ rm(Anzahldat, laender, AnzahlLaender, AnzahlLaenderBar, i)
 
 Welche Länder wurden in jedem Jahr aufs Neue beliefert?
 
-```{r}
+```{r regular customers}
 Stammlaender <- list() # leere Zielliste
 for(i in 2000:2016){
   Stammlaender[[i]] <- unique(export_restructured[export_restructured$Jahr==i,]$Land) # Länder werden nach Jahren sortiert und in der Liste abgelegt
@@ -430,7 +497,7 @@ Rüstungsunternehmen aus der Schweiz belieferten im Zeitraum von 2000 bis 2016 1
 
 Mit welchen 10 Ländern wird am meisten gehandelt?
 
-```{r, fig.height = 8}
+```{r top 10 countries, fig.height = 8}
 # 2000-2016 gesamt
 # erstelle data frame, der nur die zehn Länder mit den höchsten Exportvolumen des Zeitabschnitts enthält  
 
@@ -581,7 +648,7 @@ Die Top 10 2000-2016 sind vor allem europäische Länder sowie die USA, Saudi-Ar
 
 Wie viel Prozent des Exportvolumens fallen auf die 5 Länder mit dem grössten Exportvolumen? 
 
-```{r}
+```{r export volume top 5 contries}
 # 2000 bis 2016 gesamt
 laenderSummen5Sortiert <- export_restructured %>%
    group_by(Land) %>%
@@ -646,7 +713,7 @@ Die Top 5 2000-2016 machen fast 47% des Exportvolumens aus. Der Anteil pro Jahr 
 
 Wie verteilt sich das Exportvolumen auf die einzelnen Kategorien? 
 
-```{r, fig.height = 7}
+```{r export volume categories, fig.height = 7}
 # 2000-2016 gesamt 
 
 Kategorie_Summen <- export_restructured  %>% 
@@ -761,7 +828,7 @@ Insgesamt exportierte die Schweiz im Zeitintervall 2000-2016 KM6 (Panzer- und an
 ##### Kategorien über Zeit, Liniencharts
 
  
-```{r}
+```{r categories over time}
 km_names <- list(
   'KM6'="Landfahrzeuge",
   'KM3'="Munition",
@@ -795,14 +862,14 @@ rm(data_for_line_plot, km_names, p, Top5_Kat, km_labeller)
 
 ##### Nur Naher Osten
 
-```{r}
+```{r define middle east countries}
 # definiere den nahen Osten 
 neareastcountries <- c("Kuwait", "Bahrain", "Oman", "Katar", "Saudi-Arabien", "Vereinigte Arabische Emirate", "Jemen", "Israel", "Jordanien", "Libanon", "Syrien", "Ägypten", "Iran", "Türkei", "Irak")
 ```
 
 Summe nach Jahr für den nahen Osten
 
-```{r, fig.height = 8}
+```{r sum per year middle east, fig.height = 8}
 OSTexportvolumenNachJahr <- export_restructured  %>% 
    filter(Land %in% neareastcountries) %>% 
    group_by(Jahr, variable) %>%
@@ -835,7 +902,7 @@ Exporte in den Nahen Osten boomen ab 2009, 2011 wurden dann vor allem Güter der
 
 Wie viel Prozent des Exportvolumens fällt auf den Nahen Osten? 
 
-```{r, fig.height = 8}
+```{r export volume middle east, fig.height = 8}
 
 # 2000 bis 2016 gesamt
 sum(OSTexportvolumenNachJahr$value) #Summe Exportvolumen an den Nahen Osten 2000-2016
@@ -941,7 +1008,7 @@ Von den Gesamtexporten von 2000 bis 2016 gingen ca. 13% allein an Länder des na
 
 Wie verteilt sich das Exportvolumen auf die Kontinente?
 
-```{r, fig.height = 8}
+```{r export volume continents, fig.height = 8}
 
 # Reinladen des Excelfiles, das in jeder Spalte die Ländernamen eines anderen Kontinenten beinhaltet
 kontinente <- read_excel("input/kontinente.xlsx")
